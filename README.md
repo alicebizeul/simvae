@@ -9,7 +9,7 @@ $ELBO_{SSL}$ considers a mixture of $N$ Gaussians as a prior with $N$ correspond
 Maximizing $ELBO_{SSL}$ promotes high likelihood for a sample $x_i$ and its augmentations {$x_i^j$}$_j$ under the $i$ -th Gaussian while minimizing the reconstruction error.
 
 <p align="center">
-    <img src="https://github.com/alicebizeul/simvae/blob/simvae/assets/graphical_model.png" alt="simvae" width="200">
+    <img src="https://github.com/alicebizeul/simvae/blob/main/assets/graphical_model.png" alt="simvae" width="200">
 </p>
 
 
