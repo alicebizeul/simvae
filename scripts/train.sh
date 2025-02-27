@@ -15,8 +15,8 @@ OUTPUT_PATH="/cluster/home/abizeul/simvae/"
 
 # hyperparameters
 AUG=2
-DATASETs=("mnist" "fashionmnist") 
-PRIORs=("gaussian" )
+DATASETs=("cifar10" "mnist" "fashionmnist") 
+PRIORs=("gaussian" "uniform")
 
 # loop over hyperparameters
 for PRIOR in "${PRIORs[@]}"

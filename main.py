@@ -32,6 +32,7 @@ def train( model, dataloader, device, optimizer, binarise, fn_output, num_sim=1,
     got_BaseVAE = isinstance(model, src.model.models.BaseVAE)
     pbar = tqdm_enumerate(dataloader, total=num_batch, message=f"  T-eval: {head_status:<6d} F-eval: {(phase=='evaluate')*1} ")
     tqdm_active = isinstance(pbar,tqdm)
+    print("TQDM",tqdm_active,pbar)
     optimizer.zero_grad()
 
     for i, (data, labels) in pbar:
@@ -292,7 +293,7 @@ if __name__ == "__main__":
     bs_val = bs * (num_sim//num_sim_val)    
 
     len_eval, nb_eval_block = 10, 0
-    FORCE_TQDM, tag, quick_epochs, quick_run = False, "", 0, False
+    FORCE_TQDM, tag, quick_epochs, quick_run = True, "", 0, False
 
     if ds_name == "cifar10":
         x_dim, channels, size = 3072, 3, 32
@@ -358,7 +359,8 @@ if __name__ == "__main__":
         optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=wd, eps=1e-4)
 
         def tqdm_enumerate(iterator, total, on_gpu=args['cuda'], force_tqdm=FORCE_TQDM, message=""):
-            if on_gpu and not force_tqdm: return enumerate(iterator)
+            if on_gpu and not force_tqdm: 
+                return enumerate(iterator)
             return tqdm(enumerate(iterator), total=total, desc=f"{message}")
 
         if isinstance(model, (src.model.models.BaseVAE)):
@@ -482,9 +484,9 @@ if __name__ == "__main__":
                     if best_scores['knn'] < (valid_epoch_acc['knn']*100):
                         best_scores['knn'] = (valid_epoch_acc['knn']*100)
 
-
                 if list(train_epoch_loss['recon']) == []:
                     train_epoch_loss['recon'], train_epoch_loss['entropy'], train_epoch_loss['prior'] = [0.], [0.], [0.]
+
                 message = f"{phase[0]}{model_status} Epoch {epoch+1:6d} of {epochs:6d}:  "  + \
                         f"T-L: {train_epoch_loss['train']:9.2f} " + \
                         f"({(list(train_epoch_loss['recon'])[-1]/bs):9.1f} " + \
@@ -502,7 +504,7 @@ if __name__ == "__main__":
                 if epochs>0:
                     loss_plot(part_loss,fn_output,metrics)
 
-                if (final_eval and new_phase) or (epoch+1)%100==0 or (epoch+1)==epochs: 
+                if (epoch+1)%100==0 or (epoch+1)==epochs: 
                     print("Saved here",fn_loss.split(".pt")[0]+f"_epoch{epoch}.pt",flush=True)
                     torch.save({
                         'model_state_dict': model.state_dict(),
