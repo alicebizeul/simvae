@@ -32,7 +32,6 @@ def train( model, dataloader, device, optimizer, binarise, fn_output, num_sim=1,
     got_BaseVAE = isinstance(model, src.model.models.BaseVAE)
     pbar = tqdm_enumerate(dataloader, total=num_batch, message=f"  T-eval: {head_status:<6d} F-eval: {(phase=='evaluate')*1} ")
     tqdm_active = isinstance(pbar,tqdm)
-    print("TQDM",tqdm_active,pbar)
     optimizer.zero_grad()
 
     for i, (data, labels) in pbar:
@@ -293,7 +292,7 @@ if __name__ == "__main__":
     bs_val = bs * (num_sim//num_sim_val)    
 
     len_eval, nb_eval_block = 10, 0
-    FORCE_TQDM, tag, quick_epochs, quick_run = True, "", 0, False
+    FORCE_TQDM, tag, quick_epochs, quick_run = False, "", 0, False
 
     if ds_name == "cifar10":
         x_dim, channels, size = 3072, 3, 32
@@ -500,6 +499,7 @@ if __name__ == "__main__":
                         f"E-C-NMI: {best_scores['clustering_nmi']:5.2f}  "  + \
                         f"E-C-ARI: {best_scores['clustering_ari']:5.2f}  "  + \
                         f"E-KNN-Ac: {best_scores['knn']:5.2f}  " 
+                print(message)
 
                 if epochs>0:
                     loss_plot(part_loss,fn_output,metrics)
