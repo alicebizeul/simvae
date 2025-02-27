@@ -120,8 +120,7 @@ def validate( model, dataloader, device, num_sim=1, k=1, schedule=("train",1,0),
             if first_eval or (model_status == 0 and head_status == 1 and phase=="train"):
                 data,   labels = src.utils.utils.reshape_data(data, labels, num_sim, layers_type=(model.resnet18))
             validating = True
-
-            if phase in ["train"]:
+            if phase=="train":
                 batch_loss, acc_pred, dec = np.nan, np.nan, None
 
                 if model_status == 1: 
@@ -426,7 +425,7 @@ if __name__ == "__main__":
                     del model.evaluator["logreg"]
                     model.decoder.to(device)
                     model.encoder.to(device)
-                    
+
             elif (epochs==0) and (epoch==0):
                 if head_status == 1: 
                     eval_optimizer, eval_optimizer_mlp = model.eval_init(num_class, lr=lr_eval, final_eval=final_eval, binary=True if num_class==2 else False)
@@ -434,85 +433,79 @@ if __name__ == "__main__":
                 new_phase=False
 
             # ----------- train & validate -------------#
-            if (model_status == 1):
-                if final_eval and new_phase:
-                    train_loader = get_data(bs_loader=64, mode_loader="train", num_sim_loader=1, strength=strength, target_transform=target_transform, seed=seed, eval=True)
-                    valid_loader = get_data(bs_loader=64, mode_loader="valid", num_sim_loader=1, strength=strength, target_transform=target_transform, seed=seed, eval=True)
-                    bs, bs_val=64, 64
-                    num_sim, num_sim_val=1, 1
+            if final_eval and new_phase:
+                train_loader = get_data(bs_loader=64, mode_loader="train", num_sim_loader=1, strength=strength, target_transform=target_transform, seed=seed, eval=True)
+                valid_loader = get_data(bs_loader=64, mode_loader="valid", num_sim_loader=1, strength=strength, target_transform=target_transform, seed=seed, eval=True)
+                bs, bs_val=64, 64
+                num_sim, num_sim_val=1, 1
 
-                train_epoch_loss, train_epoch_acc = train( 
-                    model, train_loader, device, optimizer, binarise, fn_trn, num_sim=num_sim,  
-                    eval_optim=eval_optimizer, eval_optim_mlp=eval_optimizer_mlp, schedule=schedule, shape=(channels,size,size),first_eval=(final_eval and new_phase))
-                if final_eval and new_phase:train_loader.dataset.switch_off()
+            train_epoch_loss, train_epoch_acc = train( 
+                model, train_loader, device, optimizer, binarise, fn_trn, num_sim=num_sim,  
+                eval_optim=eval_optimizer, eval_optim_mlp=eval_optimizer_mlp, schedule=schedule, shape=(channels,size,size),first_eval=(final_eval and new_phase))
+            if final_eval and new_phase:train_loader.dataset.switch_off()
 
-                if ((phase != 'train') or (phase == 'train' and model_status != 1)) and (ds_name != "celeba"): 
-                    valid_epoch_loss, valid_epoch_acc = validate( 
-                        model, valid_loader, device, num_sim=num_sim_val, schedule=schedule,first_eval=(final_eval and new_phase))
-                else:
-                    valid_epoch_loss, valid_epoch_acc = {"train":0.0, "recon":0.0, "entropy":0.0, "prior":0.0}, {"logreg":0.0,"mlp":0.0,"clustering":0.0,"clustering_nmi":0.0,"clustering_ari":0.0,"knn":0.0}
-                if final_eval and new_phase:valid_loader.dataset.switch_off()
+            if ((phase != 'train') or (phase == 'train' and model_status != 1)) and (ds_name != "celeba"): 
+                valid_epoch_loss, valid_epoch_acc = validate( 
+                    model, valid_loader, device, num_sim=num_sim_val, schedule=schedule,first_eval=(final_eval and new_phase))
+            else:
+                valid_epoch_loss, valid_epoch_acc = {"train":0.0, "recon":0.0, "entropy":0.0, "prior":0.0}, {"logreg":0.0,"mlp":0.0,"clustering":0.0,"clustering_nmi":0.0,"clustering_ari":0.0,"knn":0.0}
+            if final_eval and new_phase:valid_loader.dataset.switch_off()
 
-                # saving losses & accuracies
-                if not math.isnan(train_epoch_loss["train"]) :      losses["train"][epoch]          = train_epoch_loss["train"]
-                if train_epoch_loss["recon"] != [] :                part_loss["recon"][epoch]       = {i: x for i,x in enumerate(train_epoch_loss["recon"])} 
-                if train_epoch_loss["entropy"] != [] :              part_loss["entropy"][epoch]     = {i: x for i,x in enumerate(train_epoch_loss["entropy"])} 
-                if train_epoch_loss["prior"] != [] :                part_loss["prior"][epoch]       = {i: x for i,x in enumerate(train_epoch_loss["prior"])} 
-                if train_epoch_loss["infonce"] != []:               part_loss["infonce"][epoch]     = {i: x for i,x in enumerate(train_epoch_loss["infonce"])}    
-                if train_epoch_loss["ce"] != []:                    part_loss["ce"][epoch]          = {i: x for i,x in enumerate(train_epoch_loss["ce"])} 
-                if not math.isnan(train_epoch_loss["evaluate"]):    losses["evaluate"][epoch]       = train_epoch_loss["evaluate"]
-                if not math.isnan(train_epoch_acc["logreg"]) :      accuracy["logreg"][epoch]       = train_epoch_acc["logreg"]
-                if not math.isnan(valid_epoch_loss["train"]) :          losses["validate"][epoch]           = valid_epoch_loss["train"]
-                if not math.isnan(valid_epoch_acc["logreg"]) :          accuracy["logreg"][epoch]           = valid_epoch_acc["logreg"]
-                if not math.isnan(valid_epoch_acc["mlp"]) :             accuracy["mlp"][epoch]              = valid_epoch_acc["mlp"]
-                if not math.isnan(valid_epoch_acc["clustering"]) :      accuracy["clustering"][epoch]       = valid_epoch_acc["clustering"]
-                if not math.isnan(valid_epoch_acc["clustering_nmi"]) :  accuracy["clustering_nmi"][epoch]   = valid_epoch_acc["clustering_nmi"]
-                if not math.isnan(valid_epoch_acc["clustering_ari"]) :  accuracy["clustering_ari"][epoch]   = valid_epoch_acc["clustering_ari"]
-                if not math.isnan(valid_epoch_acc["knn"]) :             accuracy["knn"][epoch]              = valid_epoch_acc["knn"]
+            # saving losses & accuracies
+            if not math.isnan(train_epoch_loss["train"]) :      losses["train"][epoch]          = train_epoch_loss["train"]
+            if train_epoch_loss["recon"] != [] :                part_loss["recon"][epoch]       = {i: x for i,x in enumerate(train_epoch_loss["recon"])} 
+            if train_epoch_loss["entropy"] != [] :              part_loss["entropy"][epoch]     = {i: x for i,x in enumerate(train_epoch_loss["entropy"])} 
+            if train_epoch_loss["prior"] != [] :                part_loss["prior"][epoch]       = {i: x for i,x in enumerate(train_epoch_loss["prior"])} 
+            if train_epoch_loss["infonce"] != []:               part_loss["infonce"][epoch]     = {i: x for i,x in enumerate(train_epoch_loss["infonce"])}    
+            if train_epoch_loss["ce"] != []:                    part_loss["ce"][epoch]          = {i: x for i,x in enumerate(train_epoch_loss["ce"])} 
+            if not math.isnan(train_epoch_loss["evaluate"]):    losses["evaluate"][epoch]       = train_epoch_loss["evaluate"]
+            if not math.isnan(train_epoch_acc["logreg"]) :      accuracy["logreg"][epoch]       = train_epoch_acc["logreg"]
+            if not math.isnan(valid_epoch_loss["train"]) :          losses["validate"][epoch]           = valid_epoch_loss["train"]
+            if not math.isnan(valid_epoch_acc["logreg"]) :          accuracy["logreg"][epoch]           = valid_epoch_acc["logreg"]
+            if not math.isnan(valid_epoch_acc["mlp"]) :             accuracy["mlp"][epoch]              = valid_epoch_acc["mlp"]
+            if not math.isnan(valid_epoch_acc["clustering"]) :      accuracy["clustering"][epoch]       = valid_epoch_acc["clustering"]
+            if not math.isnan(valid_epoch_acc["clustering_nmi"]) :  accuracy["clustering_nmi"][epoch]   = valid_epoch_acc["clustering_nmi"]
+            if not math.isnan(valid_epoch_acc["clustering_ari"]) :  accuracy["clustering_ari"][epoch]   = valid_epoch_acc["clustering_ari"]
+            if not math.isnan(valid_epoch_acc["knn"]) :             accuracy["knn"][epoch]              = valid_epoch_acc["knn"]
 
-                if (phase != 'train') or (phase == 'train' and model_status != 1):
-                    if best_scores['logreg'] < (valid_epoch_acc['logreg']*100):
-                        best_scores['logreg'] = (valid_epoch_acc['logreg']*100)
-                    if best_scores['mlp'] < (valid_epoch_acc['mlp']*100):
-                        best_scores['mlp'] = (valid_epoch_acc['mlp']*100)
-                    if best_scores['clustering'] < (valid_epoch_acc['clustering']*100):
-                        best_scores['clustering'] = (valid_epoch_acc['clustering']*100)
-                    if best_scores['clustering_nmi'] < (valid_epoch_acc['clustering_nmi']*100):
-                        best_scores['clustering_nmi'] = (valid_epoch_acc['clustering_nmi']*100)
-                    if best_scores['clustering_ari'] < (valid_epoch_acc['clustering_ari']*100):
-                        best_scores['clustering_ari'] = (valid_epoch_acc['clustering_ari']*100)
-                    if best_scores['knn'] < (valid_epoch_acc['knn']*100):
-                        best_scores['knn'] = (valid_epoch_acc['knn']*100)
+            if (phase != 'train') or (phase == 'train' and model_status != 1):
+                if best_scores['logreg'] < (valid_epoch_acc['logreg']*100):
+                    best_scores['logreg'] = (valid_epoch_acc['logreg']*100)
+                if best_scores['mlp'] < (valid_epoch_acc['mlp']*100):
+                    best_scores['mlp'] = (valid_epoch_acc['mlp']*100)
+                if best_scores['clustering'] < (valid_epoch_acc['clustering']*100):
+                    best_scores['clustering'] = (valid_epoch_acc['clustering']*100)
+                if best_scores['clustering_nmi'] < (valid_epoch_acc['clustering_nmi']*100):
+                    best_scores['clustering_nmi'] = (valid_epoch_acc['clustering_nmi']*100)
+                if best_scores['clustering_ari'] < (valid_epoch_acc['clustering_ari']*100):
+                    best_scores['clustering_ari'] = (valid_epoch_acc['clustering_ari']*100)
+                if best_scores['knn'] < (valid_epoch_acc['knn']*100):
+                    best_scores['knn'] = (valid_epoch_acc['knn']*100)
 
-                if list(train_epoch_loss['recon']) == []:
-                    train_epoch_loss['recon'], train_epoch_loss['entropy'], train_epoch_loss['prior'] = [0.], [0.], [0.]
+            if list(train_epoch_loss['recon']) == []:
+                train_epoch_loss['recon'], train_epoch_loss['entropy'], train_epoch_loss['prior'] = [0.], [0.], [0.]
 
-                message = f"{phase[0]}{model_status} Epoch {epoch+1:6d} of {epochs:6d}:  "  + \
-                        f"T-L: {train_epoch_loss['train']:9.2f} " + \
-                        f"({(list(train_epoch_loss['recon'])[-1]/bs):9.1f} " + \
-                        f"{(list(train_epoch_loss['entropy'])[-1]/bs):5.1f} " + \
-                        f"{(list(train_epoch_loss['prior'])[-1]/bs):5.1f})  " + \
-                        f"V-L: {valid_epoch_loss['train']:9.2f} " + \
-                        f"E-T-Ac: {train_epoch_acc['logreg']*100:5.2f}  " + \
-                        f"E-V-Ac: {best_scores['logreg']:5.2f}  "  + \
-                        f"E-V-MLP: {best_scores['mlp']:5.2f}  "  + \
-                        f"E-C-Ac: {best_scores['clustering']:5.2f}  "  + \
-                        f"E-C-NMI: {best_scores['clustering_nmi']:5.2f}  "  + \
-                        f"E-C-ARI: {best_scores['clustering_ari']:5.2f}  "  + \
-                        f"E-KNN-Ac: {best_scores['knn']:5.2f}  " 
-                print(message)
+            print(f"{phase[0]}{model_status} Epoch {epoch+1:6d} of {epochs:6d}:  "  + \
+                    f"T-L: {train_epoch_loss['train']:9.2f} " + \
+                    f"({(list(train_epoch_loss['recon'])[-1]/bs):9.1f} " + \
+                    f"{(list(train_epoch_loss['entropy'])[-1]/bs):5.1f} " + \
+                    f"{(list(train_epoch_loss['prior'])[-1]/bs):5.1f})  " + \
+                    f"V-L: {valid_epoch_loss['train']:9.2f} " + \
+                    f"E-T-Ac: {train_epoch_acc['logreg']*100:5.2f}  " + \
+                    f"E-V-Ac: {best_scores['logreg']:5.2f}  "  + \
+                    f"E-V-MLP: {best_scores['mlp']:5.2f}  ")
 
-                if epochs>0:
-                    loss_plot(part_loss,fn_output,metrics)
+            if epochs>0:
+                loss_plot(part_loss,fn_output,metrics)
 
-                if (epoch+1)%100==0 or (epoch+1)==epochs: 
-                    print("Saved here",fn_loss.split(".pt")[0]+f"_epoch{epoch}.pt",flush=True)
-                    torch.save({
-                        'model_state_dict': model.state_dict(),
-                        'loss': losses,
-                        'accuracy': accuracy,
-                        'metrics': metrics,
-                        }, fn_loss.split(".pt")[0]+f"_epoch{epoch}.pt")
+            if (epoch+1)%100==0 or (epoch+1)==epochs: 
+                print("Saved here",fn_loss.split(".pt")[0]+f"_epoch{epoch}.pt",flush=True)
+                torch.save({
+                    'model_state_dict': model.state_dict(),
+                    'loss': losses,
+                    'accuracy': accuracy,
+                    'metrics': metrics,
+                    }, fn_loss.split(".pt")[0]+f"_epoch{epoch}.pt")
                     
 
     

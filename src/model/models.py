@@ -262,7 +262,7 @@ class BaseVAE(nn.Module):
         else:
             recon = 0.5 * nn.MSELoss(reduction="sum")(mu_x, x)   
 
-        entropy = 0.5 torch.sum(2*math.pi*log_var_z)
+        entropy = 0.5 * torch.sum(2*math.pi*log_var_z)
         return recon / math.exp(log_var_x), entropy
 
     def log_p_z(self, z):
