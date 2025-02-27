@@ -44,7 +44,7 @@ class Prior_Sup(nn.Module):
             log_p_z_y = -0.5 * torch.sum( torch.pow(z - c_means, 2) / self.var_z_y, dim=1)
             
             if self.p_y_prior == 'uniform':
-                log_p_y = - math.log(self.num_data)        
+                log_p_y = math.log(self.num_data)        
             elif self.p_y_prior == 'gaussian':
                 log_p_y = - 0.5 * torch.sum(torch.pow(c_means, 2),1)
             log_p_zy  = log_p_z_y + log_p_y

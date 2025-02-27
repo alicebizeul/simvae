@@ -426,6 +426,7 @@ if __name__ == "__main__":
                     del model.evaluator["logreg"]
                     model.decoder.to(device)
                     model.encoder.to(device)
+                    
             elif (epochs==0) and (epoch==0):
                 if head_status == 1: 
                     eval_optimizer, eval_optimizer_mlp = model.eval_init(num_class, lr=lr_eval, final_eval=final_eval, binary=True if num_class==2 else False)

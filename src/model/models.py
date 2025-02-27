@@ -258,11 +258,11 @@ class BaseVAE(nn.Module):
         (mu_z, log_var_z), (mu_x, log_var_x) = q_c_gnv_x, p_x_gnv_z
 
         if self.binarise:
-            recon = -nn.BCELoss(reduction="sum")(mu_x, x)
+            recon = nn.BCELoss(reduction="sum")(mu_x, x)
         else:
-            recon = -0.5 * nn.MSELoss(reduction="sum")(mu_x, x)   
+            recon = 0.5 * nn.MSELoss(reduction="sum")(mu_x, x)   
 
-        entropy = 0.5 * torch.sum(log_var_z + 1) 
+        entropy = 0.5 torch.sum(2*math.pi*log_var_z)
         return recon / math.exp(log_var_x), entropy
 
     def log_p_z(self, z):
@@ -271,7 +271,7 @@ class BaseVAE(nn.Module):
     def loss(self, x, q_c_gnv_x, p_x_gnv_z, c ):
         recon, entropy = self.recon_and_entropy(x, q_c_gnv_x, p_x_gnv_z)
         prior = self.log_p_z(c)
-        return -recon, -entropy, -prior                                          
+        return recon, -entropy, -prior                                          
 
 class GmmVAE(BaseVAE):
     """Assume: C --> Z --> X    ELBO:  p(x) ≥ ∫q(z|x) { log p(x|z) - q(z|x) + ∑ p_old(c|z) log p(z|c)p(c)"""
